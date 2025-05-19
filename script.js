@@ -1,150 +1,119 @@
-// Wait for DOM to be fully loaded before executing scripts
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', () => {
+  // Generate random stars
+  const starsContainer = document.querySelector('.stars');
+  for (let i = 0; i < 15; i++) {
+    const star = document.createElement('div');
+    star.className = 'star';
+    star.style.top = `${Math.random() * 100}%`;
+    star.style.left = `${Math.random() * 100}%`;
+    star.style.animationDelay = `${Math.random() * 2}s`;
+    starsContainer.appendChild(star);
+  }
+
+  // Typing animation
+  const typingText = document.querySelector('.typing-text');
+  const text = typingText.textContent;
+  typingText.textContent = '';
+  let i = 0;
+  const typing = setInterval(() => {
+    if (i < text.length) {
+      typingText.textContent += text.charAt(i);
+      i++;
+    } else {
+      clearInterval(typing);
+    }
+  }, 100);
+
+  // Mobile navigation toggle
+  const hamburger = document.querySelector('.hamburger');
+  const mobileNavLinks = document.querySelector('.mobile-nav .nav-links');
+  
+  hamburger.addEventListener('click', () => {
+    mobileNavLinks.classList.toggle('active');
+  });
+
+  // Close mobile menu when clicking a link
+  document.querySelectorAll('.mobile-nav .nav-links a').forEach(link => {
+    link.addEventListener('click', () => {
+      mobileNavLinks.classList.remove('active');
+    });
+  });
+
   // Dark Mode Toggle
   const darkModeToggle = document.getElementById('dark-mode-toggle');
   const body = document.body;
-  const themePreference = window.matchMedia('(prefers-color-scheme: dark)');
 
-  // Check for saved theme in localStorage or system preference
-  function applyTheme() {
-    const savedTheme = localStorage.getItem('theme');
-    const systemDark = themePreference.matches;
-    
-    if (savedTheme === 'dark' || (!savedTheme && systemDark)) {
-      body.classList.add('dark-mode');
-      darkModeToggle.innerHTML = '☀️';
-      darkModeToggle.setAttribute('aria-label', 'Switch to light mode');
-    } else {
-      body.classList.remove('dark-mode');
-      darkModeToggle.innerHTML = '🌙';
-      darkModeToggle.setAttribute('aria-label', 'Switch to dark mode');
-    }
+  // Check for saved theme in localStorage
+  const savedTheme = localStorage.getItem('theme');
+  if (savedTheme === 'dark') {
+    body.classList.add('dark-mode');
+    darkModeToggle.textContent = '☀️';
   }
-
-  // Initialize theme
-  applyTheme();
 
   // Toggle dark mode
   darkModeToggle.addEventListener('click', () => {
-    const isDarkMode = body.classList.toggle('dark-mode');
+    body.classList.toggle('dark-mode');
+    const isDarkMode = body.classList.contains('dark-mode');
     localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
-    darkModeToggle.innerHTML = isDarkMode ? '☀️' : '🌙';
-    darkModeToggle.setAttribute('aria-label', 
-      isDarkMode ? 'Switch to light mode' : 'Switch to dark mode');
+    darkModeToggle.textContent = isDarkMode ? '☀️' : '🌙';
   });
-
-  // Listen for system theme changes
-  themePreference.addEventListener('change', applyTheme);
 
   // Smooth scrolling for anchor links
   document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-    anchor.addEventListener('click', function(e) {
+    anchor.addEventListener('click', function (e) {
       e.preventDefault();
-      const targetId = this.getAttribute('href');
-      const targetElement = document.querySelector(targetId);
-      
-      if (targetElement) {
-        targetElement.scrollIntoView({
-          behavior: 'smooth',
-          block: 'start'
-        });
-        
-        // Update URL without jumping
-        if (history.pushState) {
-          history.pushState(null, null, targetId);
-        } else {
-          location.hash = targetId;
-        }
-      }
+      document.querySelector(this.getAttribute('href')).scrollIntoView({
+        behavior: 'smooth'
+      });
     });
   });
 
-  // Form submission handler
-  const contactForm = document.getElementById('contactForm');
-  if (contactForm) {
-    contactForm.addEventListener('submit', async function(e) {
-      e.preventDefault();
-      
-      const form = e.target;
-      const formStatus = document.getElementById('formStatus');
-      const submitButton = form.querySelector('button[type="submit"]');
-      const originalButtonText = submitButton.textContent;
-      
-      // Disable button during submission
-      submitButton.disabled = true;
-      submitButton.textContent = 'Sending...';
-      formStatus.textContent = '';
-      formStatus.className = '';
-      
-      try {
-        const response = await fetch(form.action, {
-          method: 'POST',
-          body: new FormData(form),
-          headers: {
-            'Accept': 'application/json'
-          }
-        });
-        
-        if (response.ok) {
-          formStatus.textContent = 'Message sent successfully!';
-          formStatus.classList.add('success');
-          form.reset();
-        } else {
-          throw new Error('Server responded with an error');
-        }
-      } catch (error) {
-        formStatus.textContent = 'Oops! Something went wrong. Please try again.';
-        formStatus.classList.add('error');
-        console.error('Form submission error:', error);
-      } finally {
-        submitButton.disabled = false;
-        submitButton.textContent = originalButtonText;
-        
-        // Scroll to form status message
-        formStatus.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-      }
-    });
-  }
-
-  // Project card hover effects
-  const projectCards = document.querySelectorAll('.project-card');
-  projectCards.forEach(card => {
-    card.addEventListener('mouseenter', () => {
-      card.style.transform = 'translateY(-10px)';
-      card.style.boxShadow = '0 15px 30px rgba(0,0,0,0.2)';
-    });
+  // Contact Form Submission
+  document.getElementById('contactForm').addEventListener('submit', function(e) {
+    e.preventDefault();
     
-    card.addEventListener('mouseleave', () => {
-      card.style.transform = 'translateY(0)';
-      card.style.boxShadow = '0 5px 15px rgba(0,0,0,0.1)';
+    const form = e.target;
+    const formStatus = document.getElementById('formStatus');
+    formStatus.textContent = "Sending your message...";
+    formStatus.style.color = "#007bff";
+
+    fetch(form.action, {
+      method: 'POST',
+      body: new FormData(form),
+      headers: {
+        'Accept': 'application/json'
+      }
+    })
+    .then(response => {
+      if (response.ok) {
+        formStatus.textContent = "Message sent successfully!";
+        formStatus.style.color = "green";
+        form.reset();
+      } else {
+        throw new Error('Failed to send message');
+      }
+    })
+    .catch(error => {
+      formStatus.textContent = "Oops! Something went wrong. Please try again.";
+      formStatus.style.color = "red";
+      console.error(error);
     });
   });
-
-  // Skills animation and tooltips
-  document.querySelectorAll('.skill-card').forEach((card, index) => {
-    // Animate on load
-    card.style.opacity = '0';
-    card.style.transform = 'translateY(20px)';
-    
-    setTimeout(() => {
-      card.style.transition = `all 0.5s ease ${index * 0.1}s`;
-      card.style.opacity = '1';
-      card.style.transform = 'translateY(0)';
-    }, 100);
-
-    // Add tooltip
-    const skill = card.getAttribute('data-skill');
-    card.setAttribute('title', `Proficiency: ${getProficiency(skill)}%`);
-  });
-
-  // Proficiency levels
-  function getProficiency(skill) {
-    const proficiency = {
-      'html': 90, 'css': 85, 'js': 80, 'react': 75,
-      'python': 85, 'django': 80, 'postman': 70,
-      'aws': 65, 'github': 85, 'docker': 75,
-      'mysql': 75, 'sqlite': 70
-    };
-    return proficiency[skill] || '70';
-  }
 });
+// Add these CSS variables to your root or dark mode toggle
+document.documentElement.style.setProperty('--bg-color', '#fff');
+document.documentElement.style.setProperty('--dark-bg', '#0a192f');
+document.documentElement.style.setProperty('--form-bg', '#fff');
+document.documentElement.style.setProperty('--dark-form-bg', '#112240');
+document.documentElement.style.setProperty('--text-color', '#555');
+document.documentElement.style.setProperty('--dark-text', '#ccd6f6');
+document.documentElement.style.setProperty('--border-color', '#ddd');
+document.documentElement.style.setProperty('--dark-border', '#1e2a47');
+document.documentElement.style.setProperty('--input-bg', '#fff');
+document.documentElement.style.setProperty('--dark-input-bg', '#112240');
+document.documentElement.style.setProperty('--btn-bg', '#0a192f');
+document.documentElement.style.setProperty('--dark-btn-bg', '#64ffda');
+document.documentElement.style.setProperty('--btn-text', '#fff');
+document.documentElement.style.setProperty('--dark-btn-text', '#0a192f');
+document.documentElement.style.setProperty('--btn-hover', '#172a45');
+document.documentElement.style.setProperty('--dark-btn-hover', '#52e3c2');
